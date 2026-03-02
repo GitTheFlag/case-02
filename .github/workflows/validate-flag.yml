@@ -1,0 +1,71 @@
+name: Flag Validator
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Validate flag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const crypto = require('crypto')
+            const title = context.payload.issue.title.trim()
+            const hash = crypto.createHash('sha256').update(title).digest('hex')
+            const flags = {
+              '2c9bbce3508a90c6d13dde23e2bd828e3804cd4584fd7d678ed8fa6c2b9d90c3': {
+                num: 1,
+                msg: '🎉 Flag 1 found! You read the commit history.',
+                why: '> **What you learned:** `git log --oneline` shows every commit ever saved on a branch — hash, author, message. Nothing in git history is easy to hide. Reading the log of an unfamiliar codebase is always the first step.'
+              },
+              '78473ffd58bcf74829464dfc761621ec2447e32fd21529913a7f23708e406375': {
+                num: 2,
+                msg: '🎉 Flag 2 found! You recovered a deleted file.',
+                why: '> **What you learned:** Deleting a file in git only removes it from the working directory. It still exists in every previous commit. This is how API keys get leaked — someone commits them, panics, deletes the file, but the secret lives on in history.'
+              },
+              '9a40e0c8dc167ac89b41aab4653175bc0eeca941e3846451688f0b343046f586': {
+                num: 3,
+                msg: '🎉 Flag 3 found! You read an annotated tag.',
+                why: '> **What you learned:** Annotated tags are not just labels — they have their own message, author, and date, separate from the commit they point to. `git tag -l` lists them, `git show <tagname>` reads them. Most developers never look at tags.'
+              },
+              '8f32e470ce638e54932cb88adfcfc24f1a695cf6e8bbe20f945fff8e1ec1f135': {
+                num: 4,
+                msg: '🎉 Flag 4 found! You found the hidden ref.',
+                why: '> **What you learned:** Git refs are not limited to branches and tags. A remote can expose any ref under `refs/*`. `git ls-remote origin` lists them all — including refs that `git branch -a` never shows. This is how git stash, git notes, and other advanced features store data on a remote.'
+              }
+            }
+            const entry = flags[hash]
+            if (entry) {
+              const player = context.payload.issue.user.login
+              await github.rest.issues.update({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `✅ Flag ${entry.num} — found by @${player}`,
+                state: 'closed'
+              })
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `✅ Correct!\n\n${entry.msg}\n\n${entry.why}\n\n---\nKeep going — find all 4 flags then complete the final task.`
+              })
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['solved']
+              })
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `❌ Not quite. Keep exploring!\n\nRemember: flags look like \`GTF{...}\`\n\nHint: read every branch, every commit message, every tag.`
+              })
+            }
