@@ -1,0 +1,36 @@
+name: Hint Bot
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  hint:
+    runs-on: ubuntu-latest
+    if: "contains(tolower(github.event.comment.body), 'hint')"
+    permissions:
+      issues: write
+    steps:
+      - name: Add hint-used label and reply
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['hint-used']
+            })
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `💡 **Hints for Case 02**\n\n` +
+                `**Flag 1** — it is in the commit history of one branch. Run \`git log --oneline feat/login\` and read every message.\n\n` +
+                `**Flag 2** — a file was deleted. Run \`git log --diff-filter=D --name-only feat/payments\` to find which file, then \`git show <hash>\` to read it.\n\n` +
+                `**Flag 3** — it is in a tag, not a commit. Run \`git tag -l\` then \`git show v0.1-hotfix\`.\n\n` +
+                `**Flag 4** — it was never committed. Run \`git checkout feat/experiment\` then \`git fsck --lost-found\`. Look for a "dangling blob" hash and run \`git show <hash>\`.\n\n` +
+                `---\n` +
+                `Remember: flags look like \`GTF{...}\`. Open a new Issue with the flag as the title.`
+            })
