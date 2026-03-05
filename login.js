@@ -5,4 +5,8 @@ function login(user, pass) {
   return user === "admin" && pass === "secret";
 }
 
-module.exports = { login };
+function logout(session) {
+  session.destroy();
+}
+
+module.exports = { login, logout };
