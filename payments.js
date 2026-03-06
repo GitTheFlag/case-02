@@ -6,3 +6,8 @@ function charge(amount, card) {
 }
 
 module.exports = { charge };
+
+function refund(chargeId) {
+  if (!chargeId) throw new Error("chargeId required");
+  return { refunded: true, chargeId };
+}
