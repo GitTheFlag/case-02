@@ -1,3 +1,0 @@
-GTF{d3l3t3d_f1l3s_t4lk}
-STRIPE_SECRET=sk_live_abc123xyz
-INTERNAL_API_KEY=dev-only-do-not-share
