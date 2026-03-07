@@ -6,6 +6,7 @@ function formatDate(d) {
 }
 
 function slugify(str) {
+  if (!str) return "";
   return str.toLowerCase().replace(/\s+/g, "-");
 }
 
